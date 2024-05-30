@@ -1,39 +1,80 @@
-// create web server in node.js
-// 1. create a web server
-// 2. read the request and response
-// 3. return the response
-// 4. start the server
+// Create web server
+const express = require('express');
+const app = express();
+const port = 3000;
 
-// load the http module, create a server and listen on port 8000
-var http = require('http');
-var fs = require('fs');
-var path = require('path');
-var url = require('url');
+// Middleware
+app.use(express.json());
 
-http.createServer(function (req, res) {
-    // parse the request containing file name
-    var pathname = url.parse(req.url).pathname;
-    // print the name of the file for which request is made
-    console.log("Request for " + pathname + " received.");
-    // read the requested file content from file system
-    fs.readFile(pathname.substr(1), function (err, data) {
-        if (err) {
-            console.log(err);
-            // HTTP Status: 404: NOT FOUND
-            // Content Type: text/plain
-            res.writeHead(404, { 'Content-Type': 'text/html' });
-        } else {
-            // Page found
-            // HTTP Status: 200 : OK
-            // Content Type: text/plain
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            // write the content of the file to response body
-            res.write(data.toString());
-        }
-        // send the response body
-        res.end();
-    });
-}).listen(8000);
+// Create comments array
+const comments = [
+  {
+    id: 1,
+    username: 'Alice',
+    comment: 'I love it!'
+  },
+  {
+    id: 2,
+    username: 'Bob',
+    comment: 'Good job!'
+  }
+];
 
-// Console will print the message
-console.log('Server running at http://')
+// Get all comments
+app.get('/comments', (req, res) => {
+  res.json(comments);
+});
+
+// Get a comment by id
+app.get('/comments/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const comment = comments.find(comment => comment.id === id);
+  if (comment) {
+    res.json(comment);
+  } else {
+    res.status(404).send('Comment not found');
+  }
+});
+
+// Add a comment
+app.post('/comments', (req, res) => {
+  const comment = req.body;
+  comments.push(comment);
+  res.status(201).send('Comment added');
+});
+
+// Update a comment
+app.put('/comments/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const newComment = req.body;
+  const index = comments.findIndex(comment => comment.id === id);
+  if (index !== -1) {
+    comments[index] = newComment;
+    res.send('Comment updated');
+  } else {
+    res.status(404).send('Comment not found');
+  }
+});
+
+// Delete a comment
+app.delete('/comments/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = comments.findIndex(comment => comment.id === id);
+  if (index !== -1) {
+    comments.splice(index, 1);
+    res.send('Comment deleted');
+  } else {
+    res.status(404).send('Comment not found');
+  }
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
+
+// Test with curl
+// $ curl http://localhost:3000/comments
+// $ curl http://localhost:3000/comments/1
+// $ curl -X POST -H "Content-Type: application/json" -d '{"id": 3, "username": "Charlie", "comment": "Awesome!"}' http://localhost:3000/comments
+//
